@@ -114,6 +114,20 @@ def train(args):
     H = model.fit_generator(load_data(args["dataset_train"]),
      validation_data=load_data(args["dataset_test"]),  steps_per_epoch=1000,
                             epochs=EPOCHS, verbose=1, validation_steps=80)
+    
+        except KeyboardInterrupt:
+      logging.info('Interrupted')
+      coord.request_stop()
+    except Exception as e:
+      coord.request_stop(e)
+    finally:
+      save_path = saver.save(sess, checkpoints_dir + "/model.ckpt", global_step=step)
+      logging.info("Model saved in file: %s" % save_path)
+      # When done, ask the threads to stop.
+      coord.request_stop()
+      coord.join(threads)
+
+    
 
     # save the model to disk
     print("[INFO] serializing network...")
