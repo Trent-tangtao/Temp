@@ -1,57 +1,103 @@
-# import the necessary packages
-from keras.models import Sequential
+from keras.models import *
+from keras.layers import *
 from keras.layers.convolutional import MaxPooling2D,ZeroPadding2D,Conv2D
-from keras.layers.core import Activation
 from keras.layers.core import Flatten,Dropout,Dense
-from keras import backend as K
 
 
-def VGG_16(width, height, depth, classes):
-    model = Sequential()
-    inputshape = (height, width, depth)
-    model.add(ZeroPadding2D((1, 1), input_shape=inputshape))  # 卷积输入层，指定了输入图像的大小
-    model.add(Conv2D(64, 3, activation='relu'))  # 64个3x3的卷积核，生成64*128*128的图像，激活函数为relu
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(64, 3, activation='relu'))  # 再来一次卷积 生成64*224*224
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # pooling操作，相当于变成64*64*64
 
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(128, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(128, 3, activation='relu'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 128*32*32
+def VGG(width, height, depth, classes):
+    inputs = Input((height, width, depth))
+    conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
+    conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
+    pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+    conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool1)
+    conv2 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv2)
+    pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+    conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool2)
+    conv3 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv3)
+    pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+    conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool3)
+    conv4 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv4)
+    drop4 = Dropout(0.5)(conv4)
+    pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(256, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(256, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(256, 3, activation='relu'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 256*16*16
+    conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(pool4)
+    conv5 = Conv2D(1024, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv5)
+    drop5 = Dropout(0.5)(conv5)
 
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 512*8*8
+    up6 = Conv2D(512, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(drop5))
+    merge6 = concatenate([drop4, up6], axis=3)
+    conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge6)
+    conv6 = Conv2D(512, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv6)
 
-    '''
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Conv2D(512, 3, activation='relu'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2))) # 到这里已经变成了512*7*7
-    '''
-    model.add(Flatten())  # 压平上述向量，变成一维25088
-    print(model.output_shape)
-    model.add(Dense(4096, activation='relu'))  # 全连接层有4096个神经核，参数个数就是4096*25088
-    model.add(Dropout(0.5))  # 0.5的概率抛弃一些连接
-    model.add(Dense(4096, activation='relu'))  # 再来一个全连接
-    model.add(Dropout(0.5))
-    model.add(Dense(classes, activation='softmax'))
+    up7 = Conv2D(256, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv6))
+    merge7 = concatenate([conv3, up7], axis=3)
+    conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge7)
+    conv7 = Conv2D(256, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv7)
+
+    up8 = Conv2D(128, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv7))
+    merge8 = concatenate([conv2, up8], axis=3)
+    conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge8)
+    conv8 = Conv2D(128, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv8)
+
+    up9 = Conv2D(64, 2, activation='relu', padding='same', kernel_initializer='he_normal')(
+        UpSampling2D(size=(2, 2))(conv8))
+    merge9 = concatenate([conv1, up9], axis=3)
+    conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(merge9)
+    conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
+    conv9 = Conv2D(3, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
+
+    # print(conv9.shape)
+    conv9 = ZeroPadding2D((1, 1))(conv9)
+    conv9 = Conv2D(64, 3, activation='relu')(conv9)
+    conv9 = ZeroPadding2D((1, 1))(conv9)
+    conv9 = Conv2D(64, 3, activation='relu')(conv9)
+    conv10 = MaxPooling2D((2, 2), strides=(2, 2))(conv9)
+
+    # print(conv10.shape)
+
+    conv10 = ZeroPadding2D((1, 1))(conv10)
+    conv10 = Conv2D(128, 3, activation='relu')(conv10)
+    conv10 = ZeroPadding2D((1, 1))(conv10)
+    conv10 = Conv2D(128, 3, activation='relu')(conv10)
+    conv11 = MaxPooling2D((2, 2), strides=(2, 2))(conv10)
+
+    conv11 = ZeroPadding2D((1, 1))(conv11)
+    conv11 = Conv2D(256, 3, activation='relu')(conv11)
+    conv11 = ZeroPadding2D((1, 1))(conv11)
+    conv11 = Conv2D(256, 3, activation='relu')(conv11)
+    conv11 = ZeroPadding2D((1, 1))(conv11)
+    conv11 = Conv2D(256, 3, activation='relu')(conv11)
+    conv12 = MaxPooling2D((2, 2), strides=(2, 2))(conv11)
+
+    conv12 = ZeroPadding2D((1, 1))(conv12)
+    conv12 = Conv2D(512, 3, activation='relu')(conv12)
+    conv12 = ZeroPadding2D((1, 1))(conv12)
+    conv12 = Conv2D(512, 3, activation='relu')(conv12)
+    conv12 = ZeroPadding2D((1, 1))(conv12)
+    conv12 = Conv2D(512, 3, activation='relu')(conv12)
+    conv13 = MaxPooling2D((2, 2), strides=(2, 2))(conv12)
+
+    conv13 = ZeroPadding2D((1, 1))(conv13)
+    conv13 = Conv2D(512, 3, activation='relu')(conv13)
+    conv13 = ZeroPadding2D((1, 1))(conv13)
+    conv13 = Conv2D(512, 3, activation='relu')(conv13)
+    conv13 = ZeroPadding2D((1, 1))(conv13)
+    conv13 = Conv2D(512, 3, activation='relu')(conv13)
+    conv14 = MaxPooling2D((2, 2), strides=(2, 2))(conv13)
+
+    # print(conv14.shape)
+
+    flat = Flatten()(conv14)
+    f1 = Dense(4096, activation='relu')(flat)
+    d1 = Dropout(0.5)(f1)
+    f2 = Dense(4096, activation='relu')(d1)
+    d2 = Dropout(0.5)(f2)
+    out = Dense(classes, activation='softmax')(d2)
+
+    model = Model(inputs=inputs, outputs=out)
 
     return model
