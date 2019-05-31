@@ -1,0 +1,57 @@
+# import the necessary packages
+from keras.models import Sequential
+from keras.layers.convolutional import MaxPooling2D,ZeroPadding2D,Conv2D
+from keras.layers.core import Activation
+from keras.layers.core import Flatten,Dropout,Dense
+from keras import backend as K
+
+
+def VGG_16(width, height, depth, classes):
+    model = Sequential()
+    inputshape = (height, width, depth)
+    model.add(ZeroPadding2D((1, 1), input_shape=inputshape))  # 卷积输入层，指定了输入图像的大小
+    model.add(Conv2D(64, 3, activation='relu'))  # 64个3x3的卷积核，生成64*128*128的图像，激活函数为relu
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(64, 3, activation='relu'))  # 再来一次卷积 生成64*224*224
+    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # pooling操作，相当于变成64*64*64
+
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(128, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(128, 3, activation='relu'))
+    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 128*32*32
+
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(256, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(256, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(256, 3, activation='relu'))
+    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 256*16*16
+
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(MaxPooling2D((2, 2), strides=(2, 2)))  # 512*8*8
+
+    '''
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(512, 3, activation='relu'))
+    model.add(MaxPooling2D((2, 2), strides=(2, 2))) # 到这里已经变成了512*7*7
+    '''
+    model.add(Flatten())  # 压平上述向量，变成一维25088
+    print(model.output_shape)
+    model.add(Dense(4096, activation='relu'))  # 全连接层有4096个神经核，参数个数就是4096*25088
+    model.add(Dropout(0.5))  # 0.5的概率抛弃一些连接
+    model.add(Dense(4096, activation='relu'))  # 再来一个全连接
+    model.add(Dropout(0.5))
+    model.add(Dense(classes, activation='softmax'))
+
+    return model
