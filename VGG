@@ -50,6 +50,8 @@ def VGG(width, height, depth, classes):
     conv9 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
     conv9 = Conv2D(3, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
 
+    # start down 
+
     # print(conv9.shape)
     conv9 = ZeroPadding2D((1, 1))(conv9)
     conv9 = Conv2D(64, 3, activation='relu')(conv9)
@@ -89,9 +91,17 @@ def VGG(width, height, depth, classes):
     conv13 = Conv2D(512, 3, activation='relu')(conv13)
     conv14 = MaxPooling2D((2, 2), strides=(2, 2))(conv13)
 
-    # print(conv14.shape)
+    conv14 = ZeroPadding2D((1, 1))(conv14)
+    conv14 = Conv2D(512, 3, activation='relu')(conv14)
+    conv14 = ZeroPadding2D((1, 1))(conv14)
+    conv14 = Conv2D(512, 3, activation='relu')(conv14)
+    conv14 = ZeroPadding2D((1, 1))(conv14)
+    conv14 = Conv2D(512, 3, activation='relu')(conv14)
+    conv15 = MaxPooling2D((2, 2), strides=(2, 2))(conv14)
 
-    flat = Flatten()(conv14)
+    # print(conv15.shape)
+
+    flat = Flatten()(conv15)
     f1 = Dense(4096, activation='relu')(flat)
     d1 = Dropout(0.5)(f1)
     f2 = Dense(4096, activation='relu')(d1)
