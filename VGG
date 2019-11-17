@@ -111,3 +111,57 @@ def VGG(width, height, depth, classes):
     model = Model(inputs=inputs, outputs=out)
 
     return model
+    
+    
+     def VGG_16(height, width, n_class, n_len,depth=3,):
+        inputshape = Input((height, width, depth))
+        x = inputshape
+
+        x = Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(2)(x)
+
+        x = Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(2)(x)
+
+        x = Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(2)(x)
+
+        x = Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_uniform')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(2)(x)
+
+        print(x.shape)
+
+        x = Flatten()(x)
+        x = Dense(1024, activation='relu')(x)
+        x = Dropout(0.5)(x)
+        x = Dense(1024, activation='relu')(x)
+        x = Dropout(0.5)(x)
+        x = [Dense(n_class, activation='softmax', name='c%d' % (i + 1))(x) for i in range(n_len)]
+        model = Model(inputs=inputshape, outputs=x)
+        return model
